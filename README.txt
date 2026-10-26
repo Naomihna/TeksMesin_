@@ -1,5 +1,7 @@
 Tugas Individu
 TeksMesin - Bahasa Kita ke Bahasa Mesin
+Hana Joma Naomi(242502040050)
+3TI01
 
 Aplikasi ini dibuat pakai Python, tampilannya pakai Tkinter.
 Intinya gampang: kita nulis kalimat biasa, terus aplikasi ini
@@ -52,7 +54,5 @@ index.html, ini versi webnya buat GitHub Pages.
 CARA_GITHUB_PAGES.txt, ini cara menampilkan versi webnya.
 README.txt, file ini.
 
-Satu catatan kecil, karena file exe ini nggak pakai tanda
-tangan digital, kadang Windows nampilin peringatan SmartScreen
-pas pertama kali dibuka. Kalau muncul, pilih aja More info,
-terus Run anyway.
+
+
