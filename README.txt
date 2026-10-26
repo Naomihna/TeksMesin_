@@ -1,5 +1,7 @@
 Tugas Individu
 TeksMesin - Bahasa Kita ke Bahasa Mesin
+Hana Joma Naomi-242502040050
+3TI01
 
 Aplikasi ini dibuat pakai Python, tampilannya pakai Tkinter.
 Intinya gampang: kita nulis kalimat biasa, terus aplikasi ini
