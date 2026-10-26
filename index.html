@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TeksMesin | Bahasa Kita ke Bahasa Mesin</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+    background: #eef2ff;
+    color: #1e1b4b;
+  }
+  .topbar {
+    background: #4338ca;
+    color: #ffffff;
+    padding: 28px 24px 24px;
+  }
+  .topbar-inner { max-width: 980px; margin: 0 auto; }
+  .topbar h1 { margin: 0; font-size: 34px; }
+  .topbar p { margin: 8px 0 0; color: #ddd6fe; font-size: 16px; }
+  .badge {
+    display: inline-block;
+    margin-top: 14px;
+    background: #f59e0b;
+    color: #1e1b4b;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 6px 12px;
+    border-radius: 999px;
+  }
+  main { max-width: 980px; margin: 0 auto; padding: 24px; }
+  .card {
+    background: #ffffff;
+    border: 1px solid #ddd6fe;
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: 0 4px 18px rgba(67, 56, 202, 0.08);
+  }
+  .modes { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  .modes button {
+    border: 1px solid #c7d2fe;
+    background: #ffffff;
+    color: #1e1b4b;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .modes button.active { background: #4338ca; color: #ffffff; border-color: #4338ca; }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+  label { display: block; font-weight: 700; margin-bottom: 8px; }
+  textarea {
+    width: 100%;
+    min-height: 170px;
+    resize: vertical;
+    border: 1px solid #c7d2fe;
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 15px;
+    font-family: inherit;
+  }
+  textarea.mono, .result {
+    font-family: Consolas, "Courier New", monospace;
+  }
+  .result {
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    border-radius: 12px;
+    padding: 12px;
+    min-height: 170px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    font-size: 15px;
+  }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+  .actions button {
+    border: 0;
+    border-radius: 10px;
+    padding: 11px 18px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .primary { background: #4338ca; color: #ffffff; }
+  .plain { background: #eef2ff; color: #1e1b4b; border: 1px solid #c7d2fe !important; }
+  #status { margin-top: 14px; color: #475569; font-size: 14px; }
+  #status.error { color: #b42318; font-weight: 700; }
+  table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
+  th, td { border-bottom: 1px solid #e2e8f0; padding: 8px 10px; text-align: center; }
+  th { background: #eef2ff; }
+  td:first-child, th:first-child { text-align: center; }
+  .note { color: #475569; font-size: 14px; line-height: 1.6; }
+  footer { max-width: 980px; margin: 0 auto; padding: 0 24px 32px; color: #475569; font-size: 13px; }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <h1>TeksMesin</h1>
+    <p>Bahasa kita diubah menjadi bahasa mesin (kode biner), dan bisa diubah kembali.</p>
+    <span class="badge">VERSI WEB &bull; GITHUB PAGES</span>
+  </div>
+</header>
+
+<main>
+  <section class="card">
+    <div class="modes">
+      <button id="btnTeks" class="active" type="button">Teks ke biner</button>
+      <button id="btnBiner" type="button">Biner ke teks</button>
+    </div>
+
+    <div class="grid">
+      <div>
+        <label id="inputLabel" for="masukan">Tulis bahasa kita di sini:</label>
+        <textarea id="masukan" placeholder="Tulis kalimatmu di sini..."></textarea>
+      </div>
+      <div>
+        <label id="outputLabel" for="hasil">Hasilnya (bahasa mesin):</label>
+        <div id="hasil" class="result" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="btnUbah" class="primary" type="button">Ubah sekarang</button>
+      <button id="btnSalin" class="plain" type="button">Salin hasil</button>
+      <button id="btnContoh" class="plain" type="button">Isi contoh</button>
+      <button id="btnHapus" class="plain" type="button">Hapus</button>
+    </div>
+    <p id="status">Tulis sesuatu di kotak kiri, lalu tekan Ubah sekarang.</p>
+
+    <h2 style="font-size:18px; margin-top:26px;">Rincian per byte (kode ASCII)</h2>
+    <p class="note">Satu huruf biasa sama dengan satu byte, yaitu 8 digit biner. Contohnya huruf A itu 65, binernya 01000001.</p>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr><th>Byte ke</th><th>Biner (8 digit)</th><th>Kode desimal</th><th>Karakter</th></tr>
+        </thead>
+        <tbody id="tabel"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="note" style="margin-top:18px;">Cara kerjanya: tiap huruf diubah dulu ke kode angkanya (kode ASCII), lalu angka itu diubah ke biner. Kode biner boleh ditulis pakai spasi antar byte atau disambung terus, dua-duanya bisa dibaca. Kalau ada angka selain 0 dan 1, atau panjangnya bukan kelipatan 8, akan muncul pesan kesalahan di atas tabel.</p>
+</main>
+
+<footer>
+  TeksMesin &mdash; tugas individu, mengubah bahasa kita menjadi bahasa mesin. Versi aplikasi jendelanya ada di TeksMesin.py dan TeksMesin.exe.
+</footer>
+
+<script>
+  var mode = "teks";
+  var masukan = document.getElementById("masukan");
+  var hasil = document.getElementById("hasil");
+  var status = document.getElementById("status");
+  var tabel = document.getElementById("tabel");
+  var btnTeks = document.getElementById("btnTeks");
+  var btnBiner = document.getElementById("btnBiner");
+  var inputLabel = document.getElementById("inputLabel");
+  var outputLabel = document.getElementById("outputLabel");
+
+  function textToBinary(text) {
+    var bytes = new TextEncoder().encode(text);
+    var parts = [];
+    for (var i = 0; i < bytes.length; i++) {
+      parts.push(bytes[i].toString(2).padStart(8, "0"));
+    }
+    return { text: parts.join(" "), bytes: bytes };
+  }
+
+  function binaryToText(code) {
+    var cleaned = code.replace(/\s+/g, "");
+    if (!cleaned) { throw new Error("Kode binernya masih kosong."); }
+    if (/[^01]/.test(cleaned)) { throw new Error("Kode biner hanya boleh berisi angka 0 dan 1."); }
+    if (cleaned.length % 8 !== 0) {
+      throw new Error("Panjang kode biner harus kelipatan 8, karena satu huruf diwakili 8 digit. Sekarang panjangnya " + cleaned.length + " digit.");
+    }
+    var bytes = new Uint8Array(cleaned.length / 8);
+    for (var i = 0; i < bytes.length; i++) {
+      bytes[i] = parseInt(cleaned.substr(i * 8, 8), 2);
+    }
+    try {
+      return { text: new TextDecoder("utf-8", { fatal: true }).decode(bytes), bytes: bytes };
+    } catch (e) {
+      throw new Error("Byte-byte ini tidak membentuk huruf yang valid (bukan pengkodean UTF-8 yang benar).");
+    }
+  }
+
+  function charFor(byte) {
+    if (byte === 32) { return "spasi"; }
+    if (byte === 10) { return "enter"; }
+    if (byte >= 33 && byte <= 126) { return String.fromCharCode(byte); }
+    return "-";
+  }
+
+  function tampilkanTabel(bytes) {
+    var html = "";
+    for (var i = 0; i < bytes.length; i++) {
+      html += "<tr><td>" + (i + 1) + "</td><td>" + bytes[i].toString(2).padStart(8, "0") + "</td><td>" + bytes[i] + "</td><td>" + charFor(bytes[i]) + "</td></tr>";
+    }
+    tabel.innerHTML = html;
+  }
+
+  function setStatus(pesan, error) {
+    status.textContent = pesan;
+    status.className = error ? "error" : "";
+  }
+
+  function bersihkanHasil() {
+    hasil.textContent = "";
+    tabel.innerHTML = "";
+  }
+
+  function setMode(modeBaru) {
+    mode = modeBaru;
+    masukan.value = "";
+    bersihkanHasil();
+    if (mode === "teks") {
+      btnTeks.classList.add("active");
+      btnBiner.classList.remove("active");
+      inputLabel.textContent = "Tulis bahasa kita di sini:";
+      outputLabel.textContent = "Hasilnya (bahasa mesin):";
+    } else {
+      btnTeks.classList.remove("active");
+      btnBiner.classList.add("active");
+      inputLabel.textContent = "Tempel kode biner di sini:";
+      outputLabel.textContent = "Hasilnya (bahasa kita):";
+    }
+    setStatus("Mode diubah. Tulis sesuatu di kotak kiri, lalu tekan Ubah sekarang.");
+    masukan.focus();
+  }
+
+  function ubah() {
+    var raw = masukan.value.trim();
+    if (!raw) {
+      bersihkanHasil();
+      setStatus("Kotaknya masih kosong. Tulis dulu, baru diubah.", true);
+      return;
+    }
+    try {
+      var out;
+      if (mode === "teks") {
+        out = textToBinary(raw);
+        hasil.textContent = out.text;
+        tampilkanTabel(out.bytes);
+        setStatus(raw.length + " karakter, " + out.bytes.length + " byte. Setiap byte di tabel menunjukkan biner dan kode desimalnya.");
+      } else {
+        out = binaryToText(raw);
+        hasil.textContent = out.text;
+        tampilkanTabel(out.bytes);
+        setStatus(out.bytes.length + " byte berhasil diubah kembali menjadi " + out.text.length + " karakter.");
+      }
+    } catch (e) {
+      bersihkanHasil();
+      setStatus(e.message, true);
+    }
+  }
+
+  function salin() {
+    var teks = hasil.textContent.trim();
+    if (!teks) {
+      setStatus("Belum ada hasil yang bisa disalin. Ubah dulu.", true);
+      return;
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(teks).then(function () {
+        setStatus("Hasil sudah disalin, tinggal ditempel di tempat lain.");
+      }, function () {
+        setStatus("Gagal menyalin otomatis. Blok hasil di kotak kanan, lalu salin manual.", true);
+      });
+    } else {
+      setStatus("Browser ini tidak mendukung salin otomatis. Blok hasil di kotak kanan, lalu salin manual.", true);
+    }
+  }
+
+  function contoh() {
+    if (mode === "teks") {
+      masukan.value = "Halo, selamat pagi!";
+    } else {
+      masukan.value = "01001000 01100001 01101100 01101111";
+    }
+    ubah();
+  }
+
+  function hapus() {
+    masukan.value = "";
+    bersihkanHasil();
+    setStatus("Sudah dibersihkan. Tulis sesuatu di kotak kiri, lalu tekan Ubah sekarang.");
+    masukan.focus();
+  }
+
+  btnTeks.addEventListener("click", function () { setMode("teks"); });
+  btnBiner.addEventListener("click", function () { setMode("biner"); });
+  document.getElementById("btnUbah").addEventListener("click", ubah);
+  document.getElementById("btnSalin").addEventListener("click", salin);
+  document.getElementById("btnContoh").addEventListener("click", contoh);
+  document.getElementById("btnHapus").addEventListener("click", hapus);
+</script>
+</body>
+</html>
